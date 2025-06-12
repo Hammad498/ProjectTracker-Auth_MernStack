@@ -1,65 +1,63 @@
 import userModel from "../models/userAuth.model.js";
 
-export const userRegister=async(req,res)=>{
-    const{name,email,password}=req.body;
+export const userRegister = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
-    const hashedPassword=await userModel.hashPassword(password);
-
-    if(!name || !email ||!password){
-        return res.status(400).json({error:"All fields are required"});
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "User already exists" });
+    }
+//////
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
     }
 
-    const register=await userModel.create({
-        name,
-        email,
-        password:hashedPassword
-    })
+    const hashedPassword = await userModel.hashPassword(password);
 
-    await register.save();
+    const user = await userModel.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully!",
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};
+
+export const userLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    const isMatched = await user.comparePassword(password);
+    if (!isMatched) {
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+
+    const token = user.generateToken();
 
     res.status(200).json({
-        success:true,
-        message:"user registered successfully!",
-        data:register
-    })
-}
-
-//////////////////////////////////////////////////
-
-export const userLogin=async(req,res)=>{
-    const {email,password}=req.body;
-
-    if(!email || !password){
-        return res.status(400).json({error:"All fields are required"});
-    }
-
-    const user=userModel.findOne({email});
-
-    if(!user){
-        return res.status(400).json({error:"User not found"});
-    }
-
-    const isMatched=await userModel.comparePassword(password);
-
-    if(!isMatched){
-        return res.status(400).json({error:"Invalid credentials"});
-    }
-
-    res.status(200).json({
-        success:true,
-        message:"user logged in successfully!",
-        data:user
-    })
-
-    const token=userModel.generateToken();
-
-    res.status(200).json({
-        success:true,
-        message:"user logged in successfully!",
-        data:user,
-        token
-    })
-
-
-    
-}
+      success: true,
+      message: "User logged in successfully!",
+      data: user,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};

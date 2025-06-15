@@ -7,6 +7,10 @@ const projectSchema=new Schema({
         required: true,
         minlength: [3, "Name must be at least 3 characters long"],
       },
+      title:{
+        type:String,
+        required:true,
+      },
       description: {
         type: String,
         required: true,
@@ -14,11 +18,7 @@ const projectSchema=new Schema({
       },
       image: {
         type: String,
-        required: true,
-      },
-      link: {
-        type: String,
-        required: true,
+        // required: true,
       },
       userId: {
         type: mongoose.Schema.Types.ObjectId,
